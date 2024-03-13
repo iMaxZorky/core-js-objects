@@ -301,32 +301,67 @@ function group(/* array, keySelector, valueSelector */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selector: '',
+
+  checkError(order) {
+    if (this.errorCode > order) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element" if selector parts arranged in an invalid order.'
+      );
+    }
+
+    if (
+      this.errorCode === order &&
+      (this.errorCode === 1 || this.errorCode === 2 || this.errorCode === 6)
+    ) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector" if element, id or pseudo-element occurs twice or more times'
+      );
+    }
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  addSelectro(value, order) {
+    this.checkError(order);
+    const obj = { ...this };
+    obj.errorCode = order;
+    obj.selector += value;
+    return obj;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return this.addSelectro(value, 1);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.addSelectro(`#${value}`, 2);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.addSelectro(`.${value}`, 3);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return this.addSelectro(`[${value}]`, 4);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return this.addSelectro(`:${value}`, 5);
+  },
+
+  pseudoElement(value) {
+    return this.addSelectro(`::${value}`, 6);
+  },
+
+  stringify() {
+    const result = this.selector;
+    this.selector = '';
+    return result;
+  },
+
+  combine(selector1, combinator, selector2) {
+    return this.addSelectro(
+      `${selector1.stringify()} ${combinator} ${selector2.stringify()}`
+    );
   },
 };
 
